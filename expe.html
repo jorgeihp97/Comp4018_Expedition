@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expedition Booking</title>
+    <link rel="stylesheet" href="expe.css">
+    <style>
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+    <script>
+        function showTab(tabId) {
+            var tabs = document.getElementsByClassName('tab-content');
+            for (var i = 0; i < tabs.length; i++) {
+                tabs[i].classList.remove('active');
+            }
+            document.getElementById(tabId).classList.add('active');
+        }
+
+        function fetchExpeditionDetails() {
+            var expeditionType = document.getElementById('expeditionType').value;
+            if (expeditionType) {
+                var xhr = new XMLHttpRequest();
+                xhr.open('POST', 'expedition.php', true);
+                xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+                xhr.onreadystatechange = function() {
+                    if (xhr.readyState == 4) {
+                        if (xhr.status == 200) {
+                            try {
+                                var response = JSON.parse(xhr.responseText);
+                                document.getElementById('guideInfo').innerHTML = response.guide || "N/A";
+                                document.getElementById('equipmentInfo').innerHTML = response.equipment || "N/A";
+                                document.getElementById('routeInfo').innerHTML = response.route || "N/A";
+                            } catch (e) {
+                                console.error("Failed to parse JSON response: ", e);
+                                console.error("Response Text: ", xhr.responseText);
+                            }
+                        } else {
+                            console.error("Failed to fetch expedition details: ", xhr.status);
+                        }
+                    }
+                };
+                xhr.send('expeditionType=' + encodeURIComponent(expeditionType));
+            }
+        }
+
+        function submitForm() {
+            var form = document.getElementById('expeditionForm');
+            var formData = new FormData(form);
+
+            var xhr = new XMLHttpRequest();
+            xhr.open('POST', 'submit_expedition.php', true);
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState == 4) {
+                    if (xhr.status == 200) {
+                        alert('Expedition booked successfully!');
+                        form.reset(); // Reset the form after successful submission
+                    } else {
+                        alert('Failed to book expedition.');
+                    }
+                }
+            };
+            xhr.send(new URLSearchParams(formData).toString());
+        }
+    </script>
+</head>
+<body>
+    <h1>Book Your Expedition</h1>
+    <form id="expeditionForm" onsubmit="event.preventDefault(); submitForm();">
+        <label for="expeditionType">Expedition Type:</label>
+        <select id="expeditionType" name="expeditionType" onchange="fetchExpeditionDetails()">
+            <option value="">Select an Expedition</option>
+            <option value="mountaineering">Mountaineering</option>
+            <option value="river rafting">River Rafting</option>
+            <option value="desert trail">Desert Trail</option>
+            <option value="desert atv">Desert ATV</option>
+            <option value="rock climbing">Rock Climbing</option>
+            <option value="skydive">Skydive</option>
+            <option value="ballooning">Ballooning</option>
+        </select>
+
+        <label for="participantName">Participant's Name:</label>
+        <input type="text" id="participantName" name="participantName" required>
+        
+        <label for="emergencyContact">Emergency Contact:</label>
+        <input type="text" id="emergencyContact" name="emergencyContact" placeholder="Name, Relationship, Phone" required>
+        
+        <label for="date">Date of Expedition:</label>
+        <input type="date" id="date" name="date" required>
+        
+        <label for="transport">Transportation Mode:</label>
+        <select id="transport" name="transport">
+            <option value="own car">Own Car</option>
+            <option value="bus">Bus</option>
+        </select>
+        
+        <button type="submit">Book Expedition</button>
+    </form>
+
+    <div id="expeditionDetails">
+        <div class="tabs">
+            <button type="button" onclick="showTab('guide')">Guide</button>
+            <button type="button" onclick="showTab('equipment')">Equipment</button>
+            <button type="button" onclick="showTab('route')">Route</button>
+        </div>
+        <div id="guide" class="tab-content">
+            <h2>Guide Information</h2>
+            <p id="guideInfo"></p>
+        </div>
+        <div id="equipment" class="tab-content">
+            <h2>Equipment</h2>
+            <p id="equipmentInfo"></p>
+        </div>
+        <div id="route" class="tab-content">
+            <h2>Route</h2>
+            <p id="routeInfo"></p>
+        </div>
+    </div>
+</body>
+</html>
